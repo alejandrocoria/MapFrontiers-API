@@ -15,6 +15,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: publish
 
     steps:
       - name: Checkout repository
@@ -49,6 +50,9 @@ jobs:
           fi
 
           echo "Publishing release version $PROJECT_VERSION"
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Publish release to Maven Central
         env:
