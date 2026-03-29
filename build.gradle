@@ -1,0 +1,134 @@
+import java.util.Locale
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+def projectGroup = property('group')
+def projectVersion = property('version')
+def projectArtifactId = property('artifactId')
+def projectJavaVersion = property('javaVersion') as int
+
+def pomName = property('pomName')
+def pomDescription = property('pomDescription')
+def pomUrl = property('pomUrl')
+def pomLicenseName = property('pomLicenseName')
+def pomLicenseUrl = property('pomLicenseUrl')
+def pomDeveloperId = property('pomDeveloperId')
+def pomDeveloperName = property('pomDeveloperName')
+def pomDeveloperEmail = property('pomDeveloperEmail')
+def pomScmConnection = property('pomScmConnection')
+def pomScmDeveloperConnection = property('pomScmDeveloperConnection')
+def pomScmUrl = property('pomScmUrl')
+
+def mavenCentralUsername = System.getenv('MAVEN_CENTRAL_USERNAME')
+def mavenCentralPassword = System.getenv('MAVEN_CENTRAL_PASSWORD')
+def signingKey = System.getenv('SIGNING_KEY')
+def signingPassword = System.getenv('SIGNING_PASSWORD')
+def isGitHubActions = System.getenv('GITHUB_ACTIONS') == 'true'
+def localPublishTasks = [
+    'publishtomavenlocal',
+    'publishmavenjavapublicationtomavenlocal'
+] as Set
+def allowedGitHubPublishTasks = [
+    'publishaggregationtocentralportal',
+    'publishaggregationtocentralsnapshots'
+] as Set
+def requestedTasks = gradle.startParameter.taskNames.collect { taskName ->
+    taskName.toLowerCase(Locale.ROOT)
+}
+def isPublishTask = { String taskName ->
+    taskName.startsWith('publish') || taskName.startsWith('nmcppublish')
+}
+def remotePublishTasks = requestedTasks.findAll { taskName ->
+    isPublishTask(taskName) && !localPublishTasks.contains(taskName)
+}
+def isRemotePublish = !remotePublishTasks.isEmpty()
+
+if (isRemotePublish && !isGitHubActions) {
+    throw new GradleException('Remote publishing is only allowed from GitHub Actions. Use publishToMavenLocal for local publishing.')
+}
+
+if (isRemotePublish) {
+    List<String> unsupportedTasks = remotePublishTasks.findAll { taskName ->
+        !allowedGitHubPublishTasks.contains(taskName)
+    }
+    if (!unsupportedTasks.isEmpty()) {
+        throw new GradleException('Unsupported remote publish task(s): ' + unsupportedTasks.join(', ')
+                + '. Use publishAggregationToCentralPortal or publishAggregationToCentralSnapshots from GitHub Actions.')
+    }
+}
+
+group = projectGroup
+version = projectVersion
+
+base {
+    archivesName = projectArtifactId
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(projectJavaVersion)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.processResources {
+    from(rootProject.file('LICENSE'))
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = projectArtifactId
+
+            pom {
+                name = pomName
+                description = pomDescription
+                url = pomUrl
+
+                licenses {
+                    license {
+                        name = pomLicenseName
+                        url = pomLicenseUrl
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = pomDeveloperId
+                        name = pomDeveloperName
+                        email = pomDeveloperEmail
+                    }
+                }
+
+                scm {
+                    connection = pomScmConnection
+                    developerConnection = pomScmDeveloperConnection
+                    url = pomScmUrl
+                }
+            }
+        }
+    }
+}
+
+if (isRemotePublish && (!mavenCentralUsername || !mavenCentralPassword)) {
+    throw new GradleException('MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD are required for Maven Central publishing.')
+}
+
+if (signingKey && signingPassword) {
+    signing {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.mavenJava
+    }
+} else if (isRemotePublish) {
+    throw new GradleException('SIGNING_KEY and SIGNING_PASSWORD are required for Maven Central publishing.')
+}

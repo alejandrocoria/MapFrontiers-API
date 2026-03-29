@@ -1,0 +1,21 @@
+plugins {
+    id 'com.gradleup.nmcp.settings' version '1.4.4'
+}
+
+def projectName = 'MapFrontiers-API'
+def isGitHubActions = System.getenv('GITHUB_ACTIONS') == 'true'
+def mavenCentralUsername = System.getenv('MAVEN_CENTRAL_USERNAME')
+def mavenCentralPassword = System.getenv('MAVEN_CENTRAL_PASSWORD')
+def hasMavenCentralCredentials = mavenCentralUsername && mavenCentralPassword
+
+rootProject.name = projectName
+
+nmcpSettings {
+    if (isGitHubActions && hasMavenCentralCredentials) {
+        centralPortal {
+            username = mavenCentralUsername
+            password = mavenCentralPassword
+            publishingType = 'AUTOMATIC'
+        }
+    }
+}
