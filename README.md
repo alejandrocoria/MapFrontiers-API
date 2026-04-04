@@ -59,6 +59,7 @@ import games.alejandrocoria.mapfrontiers.api.client.IMapFrontiersClientAPI;
 import games.alejandrocoria.mapfrontiers.api.event.EventBus;
 import games.alejandrocoria.mapfrontiers.api.event.FrontierCreatedEvent;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.Point2i;
@@ -85,7 +86,8 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
                         new Point2i(100, 0),
                         new Point2i(100, 100),
                         new Point2i(0, 100)
-                ))
+                )),
+                FrontierLifetime.SESSION_ONLY
         );
 
         result.frontierId().ifPresent(frontierId ->
@@ -111,8 +113,12 @@ Client-side notes:
 
 - many client actions are asynchronous and return `ACCEPTED_ASYNC`
 - in singleplayer, requests still go through the logical server
+- `createPersonalFrontier(dimension, shape)` still creates a `PERSISTENT` frontier
+- `createPersonalFrontier(dimension, shape, FrontierLifetime.SESSION_ONLY)` creates a local-only frontier for the current client session
 - `FrontierDataView` is a snapshot, not a live object
-- sharing from the client API requires MapFrontiers to be present on the server
+- `FrontierDataView.lifetime()` exposes whether a frontier is `PERSISTENT` or `SESSION_ONLY`
+- session-only frontiers are personal-only, not persisted, not sent to the server, and are not shareable
+- sharing from the client API requires MapFrontiers to be present on the server for persistent personal frontiers
 
 ## Register a server plugin
 
@@ -179,6 +185,7 @@ Server-side notes:
 ## Basic concepts
 
 - `FrontierShape` describes frontier geometry, either by vertices or by chunks
+- `FrontierLifetime` describes whether a frontier is `PERSISTENT` or `SESSION_ONLY`
 - `FrontierMutation` is used for partial updates
 - `FrontierDataView` is the read-only view returned by the API
 - `EventBus` lets client and server plugins react to created, updated and deleted frontiers
@@ -186,7 +193,8 @@ Server-side notes:
 ## Current limitations
 
 - each frontier name field is currently limited to 17 characters
-- client-side sharing methods require MapFrontiers to be present on the server
+- session-only support currently exists only for personal frontiers created from the client API
+- client-side sharing methods require MapFrontiers to be present on the server, and session-only frontiers are always rejected
 - when MapFrontiers is not present on the server, the GUI can send a copy of a frontier by chat, but that flow is not available through the API
 
 ## Further reading
@@ -198,6 +206,7 @@ After this overview, the best next step is to inspect the Javadoc in the main AP
 - `IMapFrontiersServerAPI`
 - `ClientFrontierService`
 - `ServerFrontierService`
+- `FrontierLifetime`
 - `FrontierMutation`
 - `FrontierShape`
 - `FrontierDataView`

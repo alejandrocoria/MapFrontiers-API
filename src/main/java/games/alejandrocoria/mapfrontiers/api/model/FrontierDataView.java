@@ -8,9 +8,11 @@ import java.util.Set;
  * Immutable snapshot view of frontier data exposed by the API.
  * <p>
  * For now, MapFrontiers limits {@code name1} and {@code name2} to 17 characters each.
+ * Lifetime is immutable after creation.
  */
 public record FrontierDataView(FrontierId id,
                                FrontierType type,
+                               FrontierLifetime lifetime,
                                DimensionId dimension,
                                int color,
                                String name1,
@@ -23,6 +25,7 @@ public record FrontierDataView(FrontierId id,
                                List<SharedUserAccess> sharedUsers) {
     public FrontierDataView {
         // Defensive copies ensure API callers cannot mutate internal state by reference.
+        lifetime = lifetime == null ? FrontierLifetime.PERSISTENT : lifetime;
         visibility = visibility == null ? Set.of() : Set.copyOf(visibility);
         sourcePluginId = sourcePluginId == null ? Optional.empty() : sourcePluginId;
         sharedUsers = sharedUsers == null ? List.of() : List.copyOf(sharedUsers);

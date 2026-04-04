@@ -12,6 +12,7 @@ import games.alejandrocoria.mapfrontiers.api.internal.PluginScopedServerFrontier
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierSharePermission;
@@ -326,6 +327,11 @@ public final class MapFrontiersAPI {
         @Override
         public FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape) {
             return delegate.createPersonalFrontier(pluginModId, dimension, shape);
+        }
+
+        @Override
+        public FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape, FrontierLifetime lifetime) {
+            return delegate.createPersonalFrontier(pluginModId, dimension, shape, lifetime);
         }
 
         @Override

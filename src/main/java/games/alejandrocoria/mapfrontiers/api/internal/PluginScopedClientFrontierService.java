@@ -4,6 +4,7 @@ import games.alejandrocoria.mapfrontiers.api.client.FrontierActionResult;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierSharePermission;
@@ -21,7 +22,10 @@ public interface PluginScopedClientFrontierService {
     FrontierActionResult deleteGlobalFrontier(String pluginModId, FrontierId frontierId);
     FrontierActionResult changeToPersonal(String pluginModId, FrontierId frontierId);
     List<FrontierDataView> listGlobalFrontiers(String pluginModId, DimensionId dimension);
-    FrontierActionResult createPersonalFrontier(String pluginModId, DimensionId dimension, FrontierShape shape);
+    default FrontierActionResult createPersonalFrontier(String pluginModId, DimensionId dimension, FrontierShape shape) {
+        return createPersonalFrontier(pluginModId, dimension, shape, FrontierLifetime.PERSISTENT);
+    }
+    FrontierActionResult createPersonalFrontier(String pluginModId, DimensionId dimension, FrontierShape shape, FrontierLifetime lifetime);
     FrontierActionResult updatePersonalFrontier(String pluginModId, FrontierId frontierId, FrontierMutation mutation);
     FrontierActionResult deletePersonalFrontier(String pluginModId, FrontierId frontierId);
     FrontierActionResult changeToGlobal(String pluginModId, FrontierId frontierId);
