@@ -192,7 +192,7 @@ Server-side notes:
 
 ## Current limitations
 
-- each frontier name field is currently limited to 17 characters
+- each frontier name field is currently limited to 48 characters
 - session-only support currently exists only for personal frontiers created from the client API
 - client-side sharing methods require MapFrontiers to be present on the server, and session-only frontiers are always rejected
 - when MapFrontiers is not present on the server, the GUI can send a copy of a frontier by chat, but that flow is not available through the API
