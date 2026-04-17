@@ -23,6 +23,7 @@ public final class FrontierMutation {
     private final Set<FrontierVisibilityFlag> visibilityToAdd;
     private final Set<FrontierVisibilityFlag> visibilityToRemove;
     private final Optional<FrontierBanner> banner;
+    private final Optional<PathStyle> pathStyle;
     private final boolean clearBanner;
 
     private FrontierMutation(Optional<String> name1,
@@ -33,6 +34,7 @@ public final class FrontierMutation {
                              Set<FrontierVisibilityFlag> visibilityToAdd,
                              Set<FrontierVisibilityFlag> visibilityToRemove,
                              Optional<FrontierBanner> banner,
+                             Optional<PathStyle> pathStyle,
                              boolean clearBanner) {
         this.name1 = name1;
         this.name2 = name2;
@@ -42,6 +44,7 @@ public final class FrontierMutation {
         this.visibilityToAdd = Set.copyOf(visibilityToAdd);
         this.visibilityToRemove = Set.copyOf(visibilityToRemove);
         this.banner = banner;
+        this.pathStyle = pathStyle;
         this.clearBanner = clearBanner;
 
         if (clearBanner && this.banner.isPresent()) {
@@ -123,6 +126,10 @@ public final class FrontierMutation {
         return builder().banner(banner).build();
     }
 
+    public static FrontierMutation pathStyle(PathStyle pathStyle) {
+        return builder().pathStyle(pathStyle).build();
+    }
+
     public static FrontierMutation withClearedBanner() {
         return builder().clearBanner().build();
     }
@@ -159,6 +166,10 @@ public final class FrontierMutation {
         return banner;
     }
 
+    public Optional<PathStyle> pathStyle() {
+        return pathStyle;
+    }
+
     public boolean clearBanner() {
         return clearBanner;
     }
@@ -179,12 +190,13 @@ public final class FrontierMutation {
                 && visibility.equals(that.visibility)
                 && visibilityToAdd.equals(that.visibilityToAdd)
                 && visibilityToRemove.equals(that.visibilityToRemove)
-                && banner.equals(that.banner);
+                && banner.equals(that.banner)
+                && pathStyle.equals(that.pathStyle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name1, name2, color, shape, visibility, visibilityToAdd, visibilityToRemove, banner, clearBanner);
+        return Objects.hash(name1, name2, color, shape, visibility, visibilityToAdd, visibilityToRemove, banner, pathStyle, clearBanner);
     }
 
     @Override
@@ -197,6 +209,7 @@ public final class FrontierMutation {
                 + ", visibilityToAdd=" + visibilityToAdd
                 + ", visibilityToRemove=" + visibilityToRemove
                 + ", banner=" + banner
+                + ", pathStyle=" + pathStyle
                 + ", clearBanner=" + clearBanner
                 + "]";
     }
@@ -210,6 +223,7 @@ public final class FrontierMutation {
         private final EnumSet<FrontierVisibilityFlag> visibilityToAdd = EnumSet.noneOf(FrontierVisibilityFlag.class);
         private final EnumSet<FrontierVisibilityFlag> visibilityToRemove = EnumSet.noneOf(FrontierVisibilityFlag.class);
         private Optional<FrontierBanner> banner = Optional.empty();
+        private Optional<PathStyle> pathStyle = Optional.empty();
         private boolean clearBanner = false;
 
         private Builder() {
@@ -296,6 +310,11 @@ public final class FrontierMutation {
             return this;
         }
 
+        public Builder pathStyle(PathStyle value) {
+            pathStyle = Optional.ofNullable(value);
+            return this;
+        }
+
         public Builder clearBanner() {
             clearBanner = true;
             banner = Optional.empty();
@@ -306,7 +325,7 @@ public final class FrontierMutation {
          * Builds an immutable mutation from the current builder state.
          */
         public FrontierMutation build() {
-            return new FrontierMutation(name1, name2, color, shape, visibility, visibilityToAdd, visibilityToRemove, banner, clearBanner);
+            return new FrontierMutation(name1, name2, color, shape, visibility, visibilityToAdd, visibilityToRemove, banner, pathStyle, clearBanner);
         }
     }
 

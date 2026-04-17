@@ -20,6 +20,7 @@ public record FrontierDataView(FrontierId id,
                                FrontierShape shape,
                                Set<FrontierVisibilityFlag> visibility,
                                FrontierBanner banner,
+                               Optional<PathStyle> pathStyle,
                                Optional<String> sourcePluginId,
                                UserRef owner,
                                List<SharedUserAccess> sharedUsers) {
@@ -27,6 +28,7 @@ public record FrontierDataView(FrontierId id,
         // Defensive copies ensure API callers cannot mutate internal state by reference.
         lifetime = lifetime == null ? FrontierLifetime.PERSISTENT : lifetime;
         visibility = visibility == null ? Set.of() : Set.copyOf(visibility);
+        pathStyle = pathStyle == null ? Optional.empty() : pathStyle;
         sourcePluginId = sourcePluginId == null ? Optional.empty() : sourcePluginId;
         sharedUsers = sharedUsers == null ? List.of() : List.copyOf(sharedUsers);
     }

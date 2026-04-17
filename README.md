@@ -62,6 +62,8 @@ import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
+import games.alejandrocoria.mapfrontiers.api.model.PathMarkerId;
+import games.alejandrocoria.mapfrontiers.api.model.PathStyle;
 import games.alejandrocoria.mapfrontiers.api.model.Point2i;
 import games.alejandrocoria.mapfrontiers.api.plugin.IMapFrontiersClientPlugin;
 
@@ -93,6 +95,22 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
         result.frontierId().ifPresent(frontierId ->
                 api.frontiers().updatePersonalFrontier(frontierId, FrontierMutation.name1("Spawn"))
         );
+
+        FrontierShape pathShape = FrontierShape.path(List.of(
+                new Point2i(0, 0),
+                new Point2i(100, 0),
+                new Point2i(160, 40)
+        ));
+
+        FrontierMutation styleMutation = FrontierMutation.pathStyle(new PathStyle(
+                PathMarkerId.ARROW,
+                PathMarkerId.SMALL_DOT,
+                PathMarkerId.BIG_DOT,
+                PathMarkerId.CHEVRON,
+                true,
+                false,
+                true
+        ));
     }
 
     @Override
@@ -117,6 +135,8 @@ Client-side notes:
 - `createPersonalFrontier(dimension, shape, FrontierLifetime.SESSION_ONLY)` creates a local-only frontier for the current client session
 - `FrontierDataView` is a snapshot, not a live object
 - `FrontierDataView.lifetime()` exposes whether a frontier is `PERSISTENT` or `SESSION_ONLY`
+- `FrontierDataView.pathStyle()` is present only for Path frontiers
+- `FrontierMutation.pathStyle(...)` only applies to Path frontiers; implementations reject it for Vertex or Chunk frontiers
 - session-only frontiers are personal-only, not persisted, not sent to the server, and are not shareable
 - sharing from the client API requires MapFrontiers to be present on the server for persistent personal frontiers
 
@@ -184,8 +204,11 @@ Server-side notes:
 
 ## Basic concepts
 
-- `FrontierShape` describes frontier geometry, either by vertices or by chunks
+- `FrontierShape` describes frontier geometry: vertex shapes are closed polygons, chunk shapes are sets of chunk coordinates, and Path shapes are open paths based on ordered points
 - `FrontierLifetime` describes whether a frontier is `PERSISTENT` or `SESSION_ONLY`
+- `PathStyle` describes per-frontier Path markers and label placement
+- `PathMarkerId` constants are built-in convenience IDs, not a closed set
+- creating a Path without an explicit style uses the MapFrontiers default Path style
 - `FrontierMutation` is used for partial updates
 - `FrontierDataView` is the read-only view returned by the API
 - `EventBus` lets client and server plugins react to created, updated and deleted frontiers
@@ -210,3 +233,5 @@ After this overview, the best next step is to inspect the Javadoc in the main AP
 - `FrontierMutation`
 - `FrontierShape`
 - `FrontierDataView`
+- `PathMarkerId`
+- `PathStyle`
