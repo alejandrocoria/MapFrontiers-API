@@ -1,9 +1,9 @@
 package games.alejandrocoria.mapfrontiers.api.client;
 
 /**
- * Outcome category for a client-side frontier request.
+ * Outcome category for a client-side API request.
  */
-public enum FrontierActionStatus {
+public enum ActionStatus {
     /**
      * Applied immediately to client-managed state.
      */
@@ -13,7 +13,7 @@ public enum FrontierActionStatus {
      */
     ACCEPTED_ASYNC,
     /**
-     * Target frontier id was not found in currently known state.
+     * Target entity id was not found in currently known state.
      */
     NOT_FOUND,
     /**

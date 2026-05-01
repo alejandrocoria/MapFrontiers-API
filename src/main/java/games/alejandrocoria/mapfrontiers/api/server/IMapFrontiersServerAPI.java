@@ -15,6 +15,13 @@ public interface IMapFrontiersServerAPI {
     ServerFrontierService frontiers();
 
     /**
+     * Collection operations available on the server side.
+     *
+     * @return server collection service
+     */
+    ServerCollectionService collections();
+
+    /**
      * Event bus scoped to server-side API events.
      *
      * @return server event bus

@@ -25,6 +25,9 @@ public final class FrontierShape {
 
     /**
      * Creates a vertex-based closed polygon shape.
+     *
+     * @param vertices polygon vertices
+     * @return vertex frontier shape
      */
     public static FrontierShape vertex(List<Point2i> vertices) {
         List<Point2i> safeVertices = vertices == null ? List.of() : List.copyOf(vertices);
@@ -33,6 +36,9 @@ public final class FrontierShape {
 
     /**
      * Creates a chunk-based shape.
+     *
+     * @param chunks chunk coordinates
+     * @return chunk frontier shape
      */
     public static FrontierShape chunk(List<ChunkCoord> chunks) {
         List<ChunkCoord> safeChunks = chunks == null ? List.of() : List.copyOf(chunks);
@@ -41,24 +47,47 @@ public final class FrontierShape {
 
     /**
      * Creates an open path based on ordered points.
+     *
+     * @param points ordered path points
+     * @return path frontier shape
      */
     public static FrontierShape path(List<Point2i> points) {
         List<Point2i> safePoints = points == null ? List.of() : List.copyOf(points);
         return new FrontierShape(FrontierShapeType.PATH, null, null, safePoints);
     }
 
+    /**
+     * Returns the shape kind.
+     *
+     * @return frontier shape type
+     */
     public FrontierShapeType type() {
         return type;
     }
 
+    /**
+     * Returns polygon vertices when {@link #type()} is {@link FrontierShapeType#VERTEX}.
+     *
+     * @return polygon vertices, or null for non-vertex shapes
+     */
     public List<Point2i> vertices() {
         return vertices;
     }
 
+    /**
+     * Returns chunk coordinates when {@link #type()} is {@link FrontierShapeType#CHUNK}.
+     *
+     * @return chunk coordinates, or null for non-chunk shapes
+     */
     public List<ChunkCoord> chunks() {
         return chunks;
     }
 
+    /**
+     * Returns path points when {@link #type()} is {@link FrontierShapeType#PATH}.
+     *
+     * @return path points, or null for non-path shapes
+     */
     public List<Point2i> points() {
         return points;
     }

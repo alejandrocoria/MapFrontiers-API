@@ -15,6 +15,13 @@ public interface IMapFrontiersClientAPI {
     ClientFrontierService frontiers();
 
     /**
+     * Collection operations available on the client side.
+     *
+     * @return client collection service
+     */
+    ClientCollectionService collections();
+
+    /**
      * Event bus scoped to client-side API events.
      *
      * @return client event bus

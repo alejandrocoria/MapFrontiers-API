@@ -1,25 +1,33 @@
 package games.alejandrocoria.mapfrontiers.api;
 
+import games.alejandrocoria.mapfrontiers.api.client.ClientCollectionService;
 import games.alejandrocoria.mapfrontiers.api.client.ClientFrontierService;
+import games.alejandrocoria.mapfrontiers.api.client.CollectionActionResult;
 import games.alejandrocoria.mapfrontiers.api.client.FrontierActionResult;
 import games.alejandrocoria.mapfrontiers.api.client.IMapFrontiersClientAPI;
 import games.alejandrocoria.mapfrontiers.api.event.EventBus;
 import games.alejandrocoria.mapfrontiers.api.internal.ApiLogger;
 import games.alejandrocoria.mapfrontiers.api.internal.InternalMapFrontiersClientAPI;
 import games.alejandrocoria.mapfrontiers.api.internal.InternalMapFrontiersServerAPI;
+import games.alejandrocoria.mapfrontiers.api.internal.PluginScopedClientCollectionService;
 import games.alejandrocoria.mapfrontiers.api.internal.PluginScopedClientFrontierService;
+import games.alejandrocoria.mapfrontiers.api.internal.PluginScopedServerCollectionService;
 import games.alejandrocoria.mapfrontiers.api.internal.PluginScopedServerFrontierService;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionCreateRequest;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionDataView;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionMutation;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
-import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
-import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierSharePermission;
 import games.alejandrocoria.mapfrontiers.api.model.UserRef;
 import games.alejandrocoria.mapfrontiers.api.plugin.IMapFrontiersClientPlugin;
 import games.alejandrocoria.mapfrontiers.api.plugin.IMapFrontiersServerPlugin;
 import games.alejandrocoria.mapfrontiers.api.server.IMapFrontiersServerAPI;
+import games.alejandrocoria.mapfrontiers.api.server.ServerCollectionService;
 import games.alejandrocoria.mapfrontiers.api.server.ServerFrontierService;
 
 import java.util.ArrayList;
@@ -239,16 +247,23 @@ public final class MapFrontiersAPI {
 
     private static final class PluginClientAPI implements IMapFrontiersClientAPI {
         private final ClientFrontierService frontiers;
+        private final ClientCollectionService collections;
         private final TrackingEventBus events;
 
         private PluginClientAPI(InternalMapFrontiersClientAPI delegate, String pluginModId) {
             this.frontiers = new PluginClientFrontierService(delegate.frontiers(), pluginModId);
+            this.collections = new PluginClientCollectionService(delegate.collections(), pluginModId);
             this.events = new TrackingEventBus(delegate.events());
         }
 
         @Override
         public ClientFrontierService frontiers() {
             return frontiers;
+        }
+
+        @Override
+        public ClientCollectionService collections() {
+            return collections;
         }
 
         @Override
@@ -263,16 +278,23 @@ public final class MapFrontiersAPI {
 
     private static final class PluginServerAPI implements IMapFrontiersServerAPI {
         private final ServerFrontierService frontiers;
+        private final ServerCollectionService collections;
         private final TrackingEventBus events;
 
         private PluginServerAPI(InternalMapFrontiersServerAPI delegate, String pluginModId) {
             this.frontiers = new PluginServerFrontierService(delegate.frontiers(), pluginModId);
+            this.collections = new PluginServerCollectionService(delegate.collections(), pluginModId);
             this.events = new TrackingEventBus(delegate.events());
         }
 
         @Override
         public ServerFrontierService frontiers() {
             return frontiers;
+        }
+
+        @Override
+        public ServerCollectionService collections() {
+            return collections;
         }
 
         @Override
@@ -300,8 +322,8 @@ public final class MapFrontiersAPI {
         }
 
         @Override
-        public FrontierActionResult createGlobalFrontier(DimensionId dimension, FrontierShape shape) {
-            return delegate.createGlobalFrontier(pluginModId, dimension, shape);
+        public FrontierActionResult createGlobalFrontier(FrontierCreateRequest request) {
+            return delegate.createGlobalFrontier(pluginModId, request);
         }
 
         @Override
@@ -325,13 +347,13 @@ public final class MapFrontiersAPI {
         }
 
         @Override
-        public FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape) {
-            return delegate.createPersonalFrontier(pluginModId, dimension, shape);
+        public FrontierActionResult createPersonalFrontier(FrontierCreateRequest request) {
+            return delegate.createPersonalFrontier(pluginModId, request);
         }
 
         @Override
-        public FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape, FrontierLifetime lifetime) {
-            return delegate.createPersonalFrontier(pluginModId, dimension, shape, lifetime);
+        public FrontierActionResult createTemporaryPersonalFrontier(FrontierCreateRequest request) {
+            return delegate.createTemporaryPersonalFrontier(pluginModId, request);
         }
 
         @Override
@@ -390,8 +412,8 @@ public final class MapFrontiersAPI {
         }
 
         @Override
-        public FrontierDataView createGlobalFrontier(UserRef owner, DimensionId dimension, FrontierShape shape) {
-            return delegate.createGlobalFrontier(pluginModId, owner, dimension, shape);
+        public FrontierDataView createGlobalFrontier(UserRef owner, FrontierCreateRequest request) {
+            return delegate.createGlobalFrontier(pluginModId, owner, request);
         }
 
         @Override
@@ -412,6 +434,101 @@ public final class MapFrontiersAPI {
         @Override
         public Optional<FrontierDataView> getFrontier(FrontierId frontierId) {
             return delegate.getFrontier(pluginModId, frontierId);
+        }
+    }
+
+    private static final class PluginClientCollectionService implements ClientCollectionService {
+        private final PluginScopedClientCollectionService delegate;
+        private final String pluginModId;
+
+        private PluginClientCollectionService(PluginScopedClientCollectionService delegate, String pluginModId) {
+            this.delegate = delegate;
+            this.pluginModId = pluginModId;
+        }
+
+        @Override
+        public Optional<CollectionDataView> getCollection(CollectionId collectionId) {
+            return delegate.getCollection(pluginModId, collectionId);
+        }
+
+        @Override
+        public List<CollectionDataView> listGlobalCollections() {
+            return delegate.listGlobalCollections(pluginModId);
+        }
+
+        @Override
+        public List<CollectionDataView> listPersonalCollections() {
+            return delegate.listPersonalCollections(pluginModId);
+        }
+
+        @Override
+        public CollectionActionResult createGlobalCollection(CollectionCreateRequest request) {
+            return delegate.createGlobalCollection(pluginModId, request);
+        }
+
+        @Override
+        public CollectionActionResult createPersonalCollection(CollectionCreateRequest request) {
+            return delegate.createPersonalCollection(pluginModId, request);
+        }
+
+        @Override
+        public CollectionActionResult createTemporaryPersonalCollection(CollectionCreateRequest request) {
+            return delegate.createTemporaryPersonalCollection(pluginModId, request);
+        }
+
+        @Override
+        public CollectionActionResult updateGlobalCollection(CollectionId collectionId, CollectionMutation mutation) {
+            return delegate.updateGlobalCollection(pluginModId, collectionId, mutation);
+        }
+
+        @Override
+        public CollectionActionResult updatePersonalCollection(CollectionId collectionId, CollectionMutation mutation) {
+            return delegate.updatePersonalCollection(pluginModId, collectionId, mutation);
+        }
+
+        @Override
+        public CollectionActionResult deleteGlobalCollection(CollectionId collectionId) {
+            return delegate.deleteGlobalCollection(pluginModId, collectionId);
+        }
+
+        @Override
+        public CollectionActionResult deletePersonalCollection(CollectionId collectionId) {
+            return delegate.deletePersonalCollection(pluginModId, collectionId);
+        }
+    }
+
+    private static final class PluginServerCollectionService implements ServerCollectionService {
+        private final PluginScopedServerCollectionService delegate;
+        private final String pluginModId;
+
+        private PluginServerCollectionService(PluginScopedServerCollectionService delegate, String pluginModId) {
+            this.delegate = delegate;
+            this.pluginModId = pluginModId;
+        }
+
+        @Override
+        public CollectionDataView createGlobalCollection(UserRef owner, CollectionCreateRequest request) {
+            return delegate.createGlobalCollection(pluginModId, owner, request);
+        }
+
+        @Override
+        public Optional<CollectionDataView> updateGlobalCollection(CollectionId collectionId, CollectionMutation mutation) {
+            return delegate.updateGlobalCollection(pluginModId, collectionId, mutation);
+        }
+
+        @Override
+        public boolean deleteGlobalCollection(CollectionId collectionId) {
+            return delegate.deleteGlobalCollection(pluginModId, collectionId);
+        }
+
+        @Override
+        public List<CollectionDataView> listGlobalCollections() {
+            return delegate.listGlobalCollections(pluginModId);
+        }
+
+        @Override
+        public Optional<CollectionDataView> getCollection(CollectionId collectionId) {
+            return delegate.getCollection(pluginModId, collectionId);
         }
     }
 }

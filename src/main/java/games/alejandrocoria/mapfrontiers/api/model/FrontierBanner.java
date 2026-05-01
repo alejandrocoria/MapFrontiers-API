@@ -10,6 +10,13 @@ import java.util.Objects;
  * @param rotation banner rotation value used by MapFrontiers rendering
  */
 public record FrontierBanner(int baseColorId, String patternsNbt, int rotation) {
+    /**
+     * Normalizes and validates banner data.
+     *
+     * @param baseColorId vanilla dye color id
+     * @param patternsNbt serialized banner patterns as SNBT
+     * @param rotation banner rotation
+     */
     public FrontierBanner {
         Objects.requireNonNull(patternsNbt, "patternsNbt");
         if (patternsNbt.isBlank()) {

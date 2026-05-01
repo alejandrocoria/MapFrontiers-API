@@ -1,10 +1,10 @@
 package games.alejandrocoria.mapfrontiers.api.server;
 
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
-import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.UserRef;
 
 import java.util.List;
@@ -21,11 +21,10 @@ public interface ServerFrontierService {
      * Creates a global frontier directly on server state.
      *
      * @param owner owner to persist in the created frontier
-     * @param dimension target dimension
-     * @param shape initial frontier shape
+     * @param request initial frontier payload
      * @return created frontier snapshot
      */
-    FrontierDataView createGlobalFrontier(UserRef owner, DimensionId dimension, FrontierShape shape);
+    FrontierDataView createGlobalFrontier(UserRef owner, FrontierCreateRequest request);
 
     /**
      * Updates a global frontier directly on server state.

@@ -1,11 +1,11 @@
 package games.alejandrocoria.mapfrontiers.api.client;
 
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
-import games.alejandrocoria.mapfrontiers.api.model.FrontierLifetime;
+import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
-import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierSharePermission;
 import games.alejandrocoria.mapfrontiers.api.model.UserRef;
 
@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Client-side frontier operations.
  * <p>
- * Methods that mutate data usually return quickly with {@link FrontierActionStatus#ACCEPTED_ASYNC}
+ * Methods that mutate data usually return quickly with {@link ActionStatus#ACCEPTED_ASYNC}
  * and are finalized by logical-server updates (including singleplayer).
  */
 @SuppressWarnings("unused")
@@ -34,11 +34,10 @@ public interface ClientFrontierService {
      * Requests creation of a global frontier from the client side.
      * In multiplayer and singleplayer this is handled asynchronously by the logical server.
      *
-     * @param dimension target dimension
-     * @param shape initial frontier shape
+     * @param request initial frontier payload
      * @return request status and optional target id
      */
-    FrontierActionResult createGlobalFrontier(DimensionId dimension, FrontierShape shape);
+    FrontierActionResult createGlobalFrontier(FrontierCreateRequest request);
 
     /**
      * Requests an update for a global frontier.
@@ -77,41 +76,23 @@ public interface ClientFrontierService {
     List<FrontierDataView> listGlobalFrontiers(DimensionId dimension);
 
     /**
-     * Requests creation of a personal frontier owned by the current client actor.
-     * This overload creates a {@link FrontierLifetime#PERSISTENT persistent} personal frontier.
+     * Requests creation of a persistent personal frontier owned by the current client actor.
+     * Temporary creation is exposed by {@link #createTemporaryPersonalFrontier(FrontierCreateRequest)}.
      *
-     * @param dimension target dimension
-     * @param shape initial frontier shape
+     * @param request initial frontier payload
      * @return request status and optional target id
      */
-    default FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape) {
-        return createPersonalFrontier(dimension, shape, FrontierLifetime.PERSISTENT);
-    }
-
-    /**
-     * Requests creation of a personal frontier owned by the current client actor.
-     * In singleplayer, persistent frontiers are handled asynchronously by the logical server.
-     * In multiplayer, persistent frontiers are asynchronous when the mod is present on the server, and may be handled locally when it is not.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} frontiers are local-only, are not persisted, are not shareable,
-     * and disappear when the current client frontier runtime is closed.
-     *
-     * @param dimension target dimension
-     * @param shape initial frontier shape
-     * @param lifetime persistence model for the new frontier
-     * @return request status and optional target id
-     */
-    FrontierActionResult createPersonalFrontier(DimensionId dimension, FrontierShape shape, FrontierLifetime lifetime);
+    FrontierActionResult createPersonalFrontier(FrontierCreateRequest request);
 
     /**
      * Requests creation of a session-only personal frontier.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} frontiers are local-only, are not persisted, are not shareable,
+     * are never sent to the server, and disappear when the current client runtime is closed.
      *
-     * @param dimension target dimension
-     * @param shape initial frontier shape
+     * @param request initial frontier payload
      * @return request status and optional target id
      */
-    default FrontierActionResult createTemporaryPersonalFrontier(DimensionId dimension, FrontierShape shape) {
-        return createPersonalFrontier(dimension, shape, FrontierLifetime.SESSION_ONLY);
-    }
+    FrontierActionResult createTemporaryPersonalFrontier(FrontierCreateRequest request);
 
     /**
      * Requests an update for a personal frontier.
@@ -136,7 +117,7 @@ public interface ClientFrontierService {
 
     /**
      * Requests conversion of a personal frontier to global.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} personal frontiers cannot be converted.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} personal frontiers cannot be converted.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
      *
@@ -155,7 +136,7 @@ public interface ClientFrontierService {
 
     /**
      * Requests sharing a personal frontier with another user.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
      * This requires the mod to be present on the server.
      * In singleplayer and in multiplayer with the mod on the server, this is handled asynchronously by the logical server.
      * In multiplayer without the mod on the server, this request is rejected.
@@ -169,7 +150,7 @@ public interface ClientFrontierService {
 
     /**
      * Requests updating permissions for an already shared user.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
      * This requires the mod to be present on the server.
      * In singleplayer and in multiplayer with the mod on the server, this is handled asynchronously by the logical server.
      * In multiplayer without the mod on the server, this request is rejected.
@@ -183,7 +164,7 @@ public interface ClientFrontierService {
 
     /**
      * Requests a partial permission update for an already shared user.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
      * This requires the mod to be present on the server.
      * In singleplayer and in multiplayer with the mod on the server, this is handled asynchronously by the logical server.
      * In multiplayer without the mod on the server, this request is rejected.
@@ -201,7 +182,7 @@ public interface ClientFrontierService {
 
     /**
      * Requests removing a shared user from a personal frontier.
-     * {@link FrontierLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
+     * {@link EntityLifetime#SESSION_ONLY Session-only} personal frontiers are rejected.
      * This requires the mod to be present on the server.
      * In singleplayer and in multiplayer with the mod on the server, this is handled asynchronously by the logical server.
      * In multiplayer without the mod on the server, this request is rejected.
