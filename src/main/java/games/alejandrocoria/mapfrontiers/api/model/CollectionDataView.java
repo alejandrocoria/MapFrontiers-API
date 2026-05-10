@@ -8,7 +8,7 @@ import java.util.Optional;
  * Lifetime is immutable after creation.
  *
  * @param id collection id
- * @param type collection scope represented with the shared frontier type enum
+ * @param type collection scope represented with the shared enum also used by frontier data views
  * @param lifetime persistence model of the created collection
  * @param owner owning user
  * @param name display name
