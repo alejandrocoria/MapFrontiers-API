@@ -19,7 +19,7 @@ import java.util.Set;
  * @param name2 second display name field
  * @param shape frontier geometry
  * @param visibility visibility flags visible through the API
- * @param banner optional banner data when configured
+ * @param banner banner data when configured, or null when the frontier has no banner
  * @param pathStyle optional path styling when the frontier is path-based
  * @param collectionId optional collection membership
  * @param sourcePluginId source plugin id when the frontier originated from a plugin-scoped operation
@@ -53,7 +53,7 @@ public record FrontierDataView(FrontierId id,
      * @param name2 second display name
      * @param shape frontier geometry
      * @param visibility visibility flags
-     * @param banner banner data when configured
+     * @param banner banner data when configured, or null when the frontier has no banner
      * @param pathStyle path style when configured
      * @param collectionId collection membership when present
      * @param sourcePluginId source plugin id when present

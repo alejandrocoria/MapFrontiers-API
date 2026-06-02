@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.model;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -13,6 +14,8 @@ import java.util.Optional;
  * @param owner owning user
  * @param name display name
  * @param color configured color
+ * @param visibility collection visibility configuration exposed by the API
+ * @param banner banner data when configured, or null when the collection has no banner
  * @param sourcePluginId source plugin id when the collection originated from a plugin-scoped operation
  */
 public record CollectionDataView(CollectionId id,
@@ -21,6 +24,8 @@ public record CollectionDataView(CollectionId id,
                                  UserRef owner,
                                  String name,
                                  int color,
+                                 CollectionVisibilitySettings visibility,
+                                 FrontierBanner banner,
                                  Optional<String> sourcePluginId) {
     /**
      * Normalizes optional fields in the collection snapshot.
@@ -31,10 +36,13 @@ public record CollectionDataView(CollectionId id,
      * @param owner owning user
      * @param name display name
      * @param color configured color
+     * @param visibility collection visibility configuration
+     * @param banner banner data when configured, or null when the collection has no banner
      * @param sourcePluginId source plugin id when present
      */
     public CollectionDataView {
         lifetime = lifetime == null ? EntityLifetime.PERSISTENT : lifetime;
+        visibility = Objects.requireNonNull(visibility, "visibility");
         sourcePluginId = sourcePluginId == null ? Optional.empty() : sourcePluginId;
     }
 }

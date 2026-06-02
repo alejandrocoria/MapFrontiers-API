@@ -12,10 +12,17 @@ import java.util.Optional;
 public final class CollectionCreateRequest {
     private final Optional<String> name;
     private final Optional<Integer> color;
+    private final Optional<CollectionVisibilitySettings> visibility;
+    private final Optional<FrontierBanner> banner;
 
-    private CollectionCreateRequest(Optional<String> name, Optional<Integer> color) {
+    private CollectionCreateRequest(Optional<String> name,
+                                    Optional<Integer> color,
+                                    Optional<CollectionVisibilitySettings> visibility,
+                                    Optional<FrontierBanner> banner) {
         this.name = name == null ? Optional.empty() : name;
         this.color = color == null ? Optional.empty() : color;
+        this.visibility = visibility == null ? Optional.empty() : visibility;
+        this.banner = banner == null ? Optional.empty() : banner;
     }
 
     /**
@@ -57,6 +64,26 @@ public final class CollectionCreateRequest {
     }
 
     /**
+     * Returns a request with only the collection visibility set.
+     *
+     * @param visibility initial collection visibility
+     * @return create request with visibility
+     */
+    public static CollectionCreateRequest visibility(CollectionVisibilitySettings visibility) {
+        return builder().visibility(visibility).build();
+    }
+
+    /**
+     * Returns a request with only the collection banner set.
+     *
+     * @param banner initial collection banner
+     * @return create request with banner
+     */
+    public static CollectionCreateRequest banner(FrontierBanner banner) {
+        return builder().banner(banner).build();
+    }
+
+    /**
      * Returns the optional initial collection name.
      *
      * @return initial collection name when present
@@ -74,6 +101,25 @@ public final class CollectionCreateRequest {
         return color;
     }
 
+    /**
+     * Returns the optional initial collection visibility settings.
+     * When absent, the underlying mod implementation keeps its current defaults.
+     *
+     * @return initial visibility settings when present
+     */
+    public Optional<CollectionVisibilitySettings> visibility() {
+        return visibility;
+    }
+
+    /**
+     * Returns the optional initial collection banner.
+     *
+     * @return initial banner when present
+     */
+    public Optional<FrontierBanner> banner() {
+        return banner;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -82,18 +128,23 @@ public final class CollectionCreateRequest {
         if (!(other instanceof CollectionCreateRequest that)) {
             return false;
         }
-        return name.equals(that.name) && color.equals(that.color);
+        return name.equals(that.name)
+                && color.equals(that.color)
+                && visibility.equals(that.visibility)
+                && banner.equals(that.banner);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, color);
+        return Objects.hash(name, color, visibility, banner);
     }
 
     @Override
     public String toString() {
         return "CollectionCreateRequest[name=" + name
                 + ", color=" + color
+                + ", visibility=" + visibility
+                + ", banner=" + banner
                 + "]";
     }
 
@@ -103,6 +154,8 @@ public final class CollectionCreateRequest {
     public static final class Builder {
         private Optional<String> name = Optional.empty();
         private Optional<Integer> color = Optional.empty();
+        private Optional<CollectionVisibilitySettings> visibility = Optional.empty();
+        private Optional<FrontierBanner> banner = Optional.empty();
 
         private Builder() {
         }
@@ -133,12 +186,35 @@ public final class CollectionCreateRequest {
         }
 
         /**
+         * Sets the initial collection visibility settings.
+         * When absent, the underlying mod implementation keeps its current defaults.
+         *
+         * @param value visibility settings, or null to clear it
+         * @return this builder
+         */
+        public Builder visibility(CollectionVisibilitySettings value) {
+            visibility = Optional.ofNullable(value);
+            return this;
+        }
+
+        /**
+         * Sets the initial collection banner.
+         *
+         * @param value banner value, or null to clear it
+         * @return this builder
+         */
+        public Builder banner(FrontierBanner value) {
+            banner = Optional.ofNullable(value);
+            return this;
+        }
+
+        /**
          * Builds an immutable request from the current builder state.
          *
          * @return immutable create request
          */
         public CollectionCreateRequest build() {
-            return new CollectionCreateRequest(name, color);
+            return new CollectionCreateRequest(name, color, visibility, banner);
         }
     }
 }

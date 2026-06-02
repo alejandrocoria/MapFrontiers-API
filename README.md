@@ -89,13 +89,18 @@ import games.alejandrocoria.mapfrontiers.api.event.CollectionUpdatedEvent;
 import games.alejandrocoria.mapfrontiers.api.event.EventBus;
 import games.alejandrocoria.mapfrontiers.api.event.FrontierCreatedEvent;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionCreateRequest;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionMutation;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionVisibilityFlag;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionVisibilitySettings;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierBanner;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.Point2i;
 import games.alejandrocoria.mapfrontiers.api.plugin.IMapFrontiersClientPlugin;
 
+import java.util.EnumSet;
 import java.util.List;
 
 public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
@@ -116,6 +121,13 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
                 CollectionCreateRequest.builder()
                         .name("Routes")
                         .color(0x33AAFF)
+                        .visibility(CollectionVisibilitySettings.builder()
+                                .visible(true)
+                                .fullscreenZoom(128)
+                                .minimapZoom(64)
+                                .webmapZoom(256)
+                                .build())
+                        .banner(new FrontierBanner(11, "[]", 0))
                         .build()
         );
 
@@ -127,6 +139,16 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
         );
 
         collectionResult.collectionId().ifPresent(collectionId -> {
+            api.collections().updatePersonalCollection(
+                    collectionId,
+                    CollectionMutation.builder()
+                            .addVisibility(EnumSet.of(CollectionVisibilityFlag.WebmapOwner))
+                            .removeVisibility(EnumSet.of(CollectionVisibilityFlag.MinimapBanner))
+                            .fullscreenZoom(512)
+                            .banner(new FrontierBanner(14, "[]", 8))
+                            .build()
+            );
+
             FrontierCreateRequest request = FrontierCreateRequest.builder(
                             new DimensionId("minecraft:overworld"),
                             FrontierShape.vertex(List.of(
@@ -192,6 +214,8 @@ Client-side notes:
 
 - create uses request objects: `FrontierCreateRequest` for frontiers and `CollectionCreateRequest` for collections
 - updates use mutations: `FrontierMutation` and `CollectionMutation`
+- `CollectionVisibilitySettings` exposes the authoritative collection visibility state returned by the API
+- `CollectionVisibilityFlag` covers the boolean collection visibility toggles, while collection zoom thresholds use dedicated numeric fields
 - `createTemporaryPersonalFrontier(request)` and `createTemporaryPersonalCollection(request)` are the public create paths for `SESSION_ONLY` entities
 - `FrontierCreateRequest.collectionId()` lets a plugin create a frontier already attached to a collection
 - many client actions are asynchronous and return `ActionStatus.ACCEPTED_ASYNC`
@@ -201,6 +225,9 @@ Client-side notes:
 - session-only frontiers and collections are personal-only, not persisted, and not sent to the server
 - frontiers and collections must use the same lifetime when associated with each other
 - the event bus is shared: frontier and collection events use the same `events()` stream
+- collection visibility and banner metadata are authoritative collection state, not client-local override state
+- collection visibility zoom helpers currently reflect the supported values of the underlying mod implementation
+- `Visible` and the per-map zoom thresholds are independent in collection visibility settings
 
 ## Register a server plugin
 
@@ -221,7 +248,9 @@ Then implement the plugin:
 ```java
 import games.alejandrocoria.mapfrontiers.api.model.CollectionCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionVisibilitySettings;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.FrontierBanner;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierShape;
 import games.alejandrocoria.mapfrontiers.api.model.Point2i;
@@ -250,6 +279,13 @@ public final class ExampleServerPlugin implements IMapFrontiersServerPlugin {
                 CollectionCreateRequest.builder()
                         .name("Protected areas")
                         .color(0xFFAA33)
+                        .visibility(CollectionVisibilitySettings.builder()
+                                .visible(true)
+                                .fullscreenZoom(256)
+                                .minimapZoom(128)
+                                .webmapZoom(512)
+                                .build())
+                        .banner(new FrontierBanner(1, "[]", 0))
                         .build()
         ).id();
 
@@ -293,6 +329,8 @@ Server-side notes:
 
 - `FrontierCreateRequest` and `CollectionCreateRequest` are used for create operations
 - `FrontierMutation` and `CollectionMutation` are used for partial updates
+- `CollectionVisibilitySettings` represents authoritative collection visibility configuration
+- `CollectionVisibilityFlag` represents the boolean subset of collection visibility toggles
 - `ActionStatus` describes the outcome category of a client request
 - `FrontierActionResult` and `CollectionActionResult` wrap client request results
 - `CollectionDataView` is the read-only view returned for collections
@@ -300,6 +338,7 @@ Server-side notes:
 - `FrontierShape` describes frontier geometry: vertex shapes are closed polygons, chunk shapes are sets of chunk coordinates, and path shapes are open paths based on ordered points
 - `EntityLifetime` describes whether an already created frontier or collection is `PERSISTENT` or `SESSION_ONLY`
 - `FrontierVisibilityFlag` defines the available display and announcement toggles for frontiers
+- collection visibility zoom thresholds reject unsupported values with `IllegalArgumentException`
 - `EventBus` lets client and server plugins react to created, updated and deleted frontiers and collections
 
 ## Current limitations

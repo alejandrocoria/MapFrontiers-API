@@ -1,10 +1,10 @@
 package games.alejandrocoria.mapfrontiers.api.client;
 
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
+import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierId;
-import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierMutation;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierSharePermission;
 import games.alejandrocoria.mapfrontiers.api.model.UserRef;

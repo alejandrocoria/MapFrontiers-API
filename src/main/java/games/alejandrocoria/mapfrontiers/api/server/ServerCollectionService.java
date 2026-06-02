@@ -12,7 +12,8 @@ import java.util.Optional;
 /**
  * Server-side collection operations.
  * <p>
- * Methods in this service mutate authoritative server state immediately.
+ * Methods in this service mutate authoritative server state immediately. Collection requests and mutations can include
+ * authoritative visibility and banner metadata when supported by the underlying mod runtime.
  */
 @SuppressWarnings("unused")
 public interface ServerCollectionService {

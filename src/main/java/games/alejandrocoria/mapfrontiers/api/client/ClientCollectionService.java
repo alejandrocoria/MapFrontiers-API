@@ -14,7 +14,8 @@ import java.util.Optional;
  * <p>
  * Most methods that mutate data return quickly with {@link ActionStatus#ACCEPTED_ASYNC} and are finalized by
  * logical-server updates (including singleplayer). Session-only personal collection creation is the main exception and
- * may be applied locally without server participation.
+ * may be applied locally without server participation. Collection requests and mutations can include authoritative
+ * visibility and banner metadata when supported by the underlying mod runtime.
  */
 @SuppressWarnings("unused")
 public interface ClientCollectionService {
