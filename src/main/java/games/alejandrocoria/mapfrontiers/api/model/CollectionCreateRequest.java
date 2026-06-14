@@ -10,15 +10,18 @@ import java.util.Optional;
  */
 @SuppressWarnings("unused")
 public final class CollectionCreateRequest {
+    private final DefaultValuesProfile defaultValuesProfile;
     private final Optional<String> name;
     private final Optional<Integer> color;
     private final Optional<CollectionVisibilitySettings> visibility;
     private final Optional<FrontierBanner> banner;
 
-    private CollectionCreateRequest(Optional<String> name,
+    private CollectionCreateRequest(DefaultValuesProfile defaultValuesProfile,
+                                    Optional<String> name,
                                     Optional<Integer> color,
                                     Optional<CollectionVisibilitySettings> visibility,
                                     Optional<FrontierBanner> banner) {
+        this.defaultValuesProfile = Objects.requireNonNull(defaultValuesProfile, "defaultValuesProfile cannot be null");
         this.name = name == null ? Optional.empty() : name;
         this.color = color == null ? Optional.empty() : color;
         this.visibility = visibility == null ? Optional.empty() : visibility;
@@ -27,15 +30,29 @@ public final class CollectionCreateRequest {
 
     /**
      * Creates a builder for combining multiple initial values in one request.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
      *
      * @return new request builder
      */
     public static Builder builder() {
-        return new Builder();
+        return builder(DefaultValuesProfile.BUILTIN);
+    }
+
+    /**
+     * Creates a builder for combining multiple initial values in one request with an explicit default value profile.
+     * Explicit request fields override the selected base profile.
+     *
+     * @param profile default value profile to use as the base for omitted fields
+     * @return new request builder
+     * @throws NullPointerException when profile is null
+     */
+    public static Builder builder(DefaultValuesProfile profile) {
+        return new Builder(Objects.requireNonNull(profile, "profile cannot be null"));
     }
 
     /**
      * Returns a request with no optional fields set.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
      *
      * @return empty create request
      */
@@ -44,7 +61,21 @@ public final class CollectionCreateRequest {
     }
 
     /**
+     * Returns a request with no optional fields set and an explicit default value profile.
+     *
+     * @param profile default value profile to use as the base for omitted fields
+     * @return empty create request
+     * @throws NullPointerException when profile is null
+     */
+    public static CollectionCreateRequest empty(DefaultValuesProfile profile) {
+        return builder(profile).build();
+    }
+
+    /**
      * Returns a request with only the collection name set.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
+     * Use {@link #builder(DefaultValuesProfile)} or {@link #empty(DefaultValuesProfile)} to choose a different
+     * default value profile.
      *
      * @param name initial collection name
      * @return create request with name
@@ -55,6 +86,9 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns a request with only the collection color set.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
+     * Use {@link #builder(DefaultValuesProfile)} or {@link #empty(DefaultValuesProfile)} to choose a different
+     * default value profile.
      *
      * @param color initial collection color
      * @return create request with color
@@ -65,6 +99,9 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns a request with only the collection visibility set.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
+     * Use {@link #builder(DefaultValuesProfile)} or {@link #empty(DefaultValuesProfile)} to choose a different
+     * default value profile.
      *
      * @param visibility initial collection visibility
      * @return create request with visibility
@@ -75,6 +112,9 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns a request with only the collection banner set.
+     * Uses {@link DefaultValuesProfile#BUILTIN} as the base for omitted fields.
+     * Use {@link #builder(DefaultValuesProfile)} or {@link #empty(DefaultValuesProfile)} to choose a different
+     * default value profile.
      *
      * @param banner initial collection banner
      * @return create request with banner
@@ -84,7 +124,20 @@ public final class CollectionCreateRequest {
     }
 
     /**
+     * Returns the default value profile used as the base for omitted fields in this request.
+     * {@link DefaultValuesProfile#BUILTIN BUILTIN} uses MapFrontiers built-in defaults.
+     * {@link DefaultValuesProfile#CONFIGURED CONFIGURED} uses configurable defaults available in the current execution
+     * context.
+     *
+     * @return default value profile for omitted fields
+     */
+    public DefaultValuesProfile defaultValuesProfile() {
+        return defaultValuesProfile;
+    }
+
+    /**
      * Returns the optional initial collection name.
+     * When absent, the selected {@link #defaultValuesProfile()} is used as the base.
      *
      * @return initial collection name when present
      */
@@ -94,6 +147,7 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns the optional initial collection color.
+     * When absent, the selected {@link #defaultValuesProfile()} is used as the base.
      *
      * @return initial collection color when present
      */
@@ -103,7 +157,8 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns the optional initial collection visibility settings.
-     * When absent, the underlying mod implementation keeps its current defaults.
+     * When absent, or when {@code null} was provided to the builder, the selected {@link #defaultValuesProfile()} is
+     * used as the base. This request does not expose a separate "clear visibility" operation.
      *
      * @return initial visibility settings when present
      */
@@ -113,6 +168,7 @@ public final class CollectionCreateRequest {
 
     /**
      * Returns the optional initial collection banner.
+     * When absent, the selected {@link #defaultValuesProfile()} is used as the base.
      *
      * @return initial banner when present
      */
@@ -129,6 +185,7 @@ public final class CollectionCreateRequest {
             return false;
         }
         return name.equals(that.name)
+                && defaultValuesProfile.equals(that.defaultValuesProfile)
                 && color.equals(that.color)
                 && visibility.equals(that.visibility)
                 && banner.equals(that.banner);
@@ -136,12 +193,13 @@ public final class CollectionCreateRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, color, visibility, banner);
+        return Objects.hash(defaultValuesProfile, name, color, visibility, banner);
     }
 
     @Override
     public String toString() {
-        return "CollectionCreateRequest[name=" + name
+        return "CollectionCreateRequest[defaultValuesProfile=" + defaultValuesProfile
+                + ", name=" + name
                 + ", color=" + color
                 + ", visibility=" + visibility
                 + ", banner=" + banner
@@ -152,19 +210,22 @@ public final class CollectionCreateRequest {
      * Builder for {@link CollectionCreateRequest}.
      */
     public static final class Builder {
+        private final DefaultValuesProfile defaultValuesProfile;
         private Optional<String> name = Optional.empty();
         private Optional<Integer> color = Optional.empty();
         private Optional<CollectionVisibilitySettings> visibility = Optional.empty();
         private Optional<FrontierBanner> banner = Optional.empty();
 
-        private Builder() {
+        private Builder(DefaultValuesProfile defaultValuesProfile) {
+            this.defaultValuesProfile = Objects.requireNonNull(defaultValuesProfile, "defaultValuesProfile cannot be null");
         }
 
         /**
          * Sets the initial collection name.
          * For now, the name field is limited to 48 characters.
+         * When null, the selected default value profile remains in effect.
          *
-         * @param value collection name, or null to clear it
+         * @param value collection name, or null to leave it omitted and use the selected default value profile
          * @return this builder
          * @throws IllegalArgumentException when the name exceeds 48 characters
          */
@@ -176,8 +237,9 @@ public final class CollectionCreateRequest {
 
         /**
          * Sets the initial collection color.
+         * When null, the selected default value profile remains in effect.
          *
-         * @param value collection color, or null to clear it
+         * @param value collection color, or null to leave it omitted and use the selected default value profile
          * @return this builder
          */
         public Builder color(Integer value) {
@@ -187,9 +249,10 @@ public final class CollectionCreateRequest {
 
         /**
          * Sets the initial collection visibility settings.
-         * When absent, the underlying mod implementation keeps its current defaults.
+         * When null, the field remains omitted so the selected default value profile remains in effect.
+         * This request does not expose a separate "clear visibility" operation.
          *
-         * @param value visibility settings, or null to clear it
+         * @param value visibility settings, or null to leave it omitted and use the selected default value profile
          * @return this builder
          */
         public Builder visibility(CollectionVisibilitySettings value) {
@@ -199,8 +262,9 @@ public final class CollectionCreateRequest {
 
         /**
          * Sets the initial collection banner.
+         * When null, the selected default value profile remains in effect.
          *
-         * @param value banner value, or null to clear it
+         * @param value banner value, or null to leave it omitted and use the selected default value profile
          * @return this builder
          */
         public Builder banner(FrontierBanner value) {
@@ -214,7 +278,7 @@ public final class CollectionCreateRequest {
          * @return immutable create request
          */
         public CollectionCreateRequest build() {
-            return new CollectionCreateRequest(name, color, visibility, banner);
+            return new CollectionCreateRequest(defaultValuesProfile, name, color, visibility, banner);
         }
     }
 }

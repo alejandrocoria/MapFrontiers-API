@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.server;
 
+import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
@@ -19,10 +20,16 @@ import java.util.Optional;
 public interface ServerFrontierService {
     /**
      * Creates a global frontier directly on server state.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} is currently unsupported in the
+     * server API and may be rejected by the implementation with {@link IllegalArgumentException} when the request is
+     * processed. Omitting optional fields, or passing null to optional create setters, delegates those values to the
+     * selected base profile.
      *
      * @param owner owner to persist in the created frontier
      * @param request initial frontier payload
      * @return created frontier snapshot
+     * @throws IllegalArgumentException when the implementation rejects an unsupported default value profile
      */
     FrontierDataView createGlobalFrontier(UserRef owner, FrontierCreateRequest request);
 

@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.client;
 
+import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
@@ -33,6 +34,10 @@ public interface ClientFrontierService {
     /**
      * Requests creation of a global frontier from the client side.
      * In multiplayer and singleplayer this is handled asynchronously by the logical server.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial frontier payload
      * @return request status and optional target id
@@ -78,6 +83,10 @@ public interface ClientFrontierService {
     /**
      * Requests creation of a persistent personal frontier owned by the current client actor.
      * Temporary creation is exposed by {@link #createTemporaryPersonalFrontier(FrontierCreateRequest)}.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial frontier payload
      * @return request status and optional target id
@@ -88,6 +97,10 @@ public interface ClientFrontierService {
      * Requests creation of a session-only personal frontier.
      * {@link EntityLifetime#SESSION_ONLY Session-only} frontiers are local-only, are not persisted, are not shareable,
      * are never sent to the server, and disappear when the current client runtime is closed.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial frontier payload
      * @return request status and optional target id

@@ -4,6 +4,7 @@ import games.alejandrocoria.mapfrontiers.api.model.CollectionCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionDataView;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionMutation;
+import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
 
 import java.util.List;
@@ -45,6 +46,10 @@ public interface ClientCollectionService {
     /**
      * Requests creation of a global collection from the client side.
      * In multiplayer and singleplayer this is handled asynchronously by the logical server.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial collection payload
      * @return request status and optional target id
@@ -55,6 +60,10 @@ public interface ClientCollectionService {
      * Requests creation of a personal collection owned by the current client actor.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial collection payload
      * @return request status and optional target id
@@ -65,6 +74,10 @@ public interface ClientCollectionService {
      * Requests creation of a session-only personal collection.
      * {@link EntityLifetime#SESSION_ONLY Session-only} collections are local-only, are not persisted, are never sent to
      * the server, and disappear when the current client runtime is closed.
+     * Requests created through convenience overloads that do not take a profile use
+     * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
+     * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
+     * setters, delegates those values to the selected base profile.
      *
      * @param request initial collection payload
      * @return request status and optional target id

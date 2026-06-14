@@ -138,6 +138,13 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
                         .build()
         );
 
+        CollectionCreateRequest configuredDefaultsCollection = CollectionCreateRequest.builder(
+                        DefaultValuesProfile.CONFIGURED)
+                .name("Configured Routes")
+                .build();
+
+        api.collections().createPersonalCollection(configuredDefaultsCollection);
+
         collectionResult.collectionId().ifPresent(collectionId -> {
             api.collections().updatePersonalCollection(
                     collectionId,
@@ -186,6 +193,20 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
         if (temporaryCollectionResult.status() == ActionStatus.REJECTED) {
             System.out.println("Temporary collection request was rejected");
         }
+
+        FrontierCreateRequest configuredDefaultsRequest = FrontierCreateRequest.builder(
+                        new DimensionId("minecraft:overworld"),
+                        FrontierShape.vertex(List.of(
+                                new Point2i(200, 200),
+                                new Point2i(260, 200),
+                                new Point2i(260, 260),
+                                new Point2i(200, 260)
+                        )),
+                        DefaultValuesProfile.CONFIGURED)
+                .name1("Configured Spawn")
+                .build();
+
+        api.frontiers().createPersonalFrontier(configuredDefaultsRequest);
     }
 
     @Override
@@ -213,6 +234,9 @@ public final class ExampleClientPlugin implements IMapFrontiersClientPlugin {
 Client-side notes:
 
 - create uses request objects: `FrontierCreateRequest` for frontiers and `CollectionCreateRequest` for collections
+- create requests use `DefaultValuesProfile.BUILTIN` when no profile is specified
+- `DefaultValuesProfile.CONFIGURED` uses the local player's configured defaults as the base for omitted create fields
+- omitting an optional create field, or passing `null` to an optional create setter, delegates that field to the selected default profile
 - updates use mutations: `FrontierMutation` and `CollectionMutation`
 - `CollectionVisibilitySettings` exposes the authoritative collection visibility state returned by the API
 - `CollectionVisibilityFlag` covers the boolean collection visibility toggles, while collection zoom thresholds use dedicated numeric fields
@@ -249,6 +273,7 @@ Then implement the plugin:
 import games.alejandrocoria.mapfrontiers.api.model.CollectionCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.CollectionVisibilitySettings;
+import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierBanner;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
@@ -324,10 +349,13 @@ Server-side notes:
 - the server API currently exposes only global frontiers and global collections
 - global frontier creation requires `UserRef owner` plus a `FrontierCreateRequest`
 - global collection creation requires `UserRef owner` plus a `CollectionCreateRequest`
+- create requests use `DefaultValuesProfile.BUILTIN` when no profile is specified
+- `DefaultValuesProfile.CONFIGURED` is currently unsupported in the server API and should be treated as invalid there
 
 ## Basic concepts
 
 - `FrontierCreateRequest` and `CollectionCreateRequest` are used for create operations
+- `DefaultValuesProfile` selects which default base is used for omitted create fields
 - `FrontierMutation` and `CollectionMutation` are used for partial updates
 - `CollectionVisibilitySettings` represents authoritative collection visibility configuration
 - `CollectionVisibilityFlag` represents the boolean subset of collection visibility toggles
