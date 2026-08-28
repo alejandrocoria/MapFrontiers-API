@@ -9,15 +9,16 @@ import java.util.Optional;
  * Result envelope returned by client-side collection operations.
  *
  * @param status outcome category for the request
- * @param collectionId id associated with the request when known
- * @param collection collection snapshot when the operation was applied locally
+ * @param collectionId id associated with the request when known; present in service results applied locally
+ * @param collection collection snapshot when the operation was applied locally; present in service results with
+ *                   {@link ActionStatus#APPLIED_LOCAL}
  */
 public record CollectionActionResult(ActionStatus status,
                                      Optional<CollectionId> collectionId,
                                      Optional<CollectionDataView> collection) {
 
     /**
-     * Creates a result indicating the operation was applied immediately.
+     * Creates a result indicating the operation was applied immediately, including its id and resulting snapshot.
      *
      * @param collection resulting collection snapshot
      * @return applied result

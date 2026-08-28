@@ -241,10 +241,10 @@ Client-side notes:
 - client frontier and collection service methods must be called from the Minecraft client thread; the API does not schedule calls from other threads
 - `CollectionVisibilitySettings` exposes the authoritative collection visibility state returned by the API
 - `CollectionVisibilityFlag` covers the boolean collection visibility toggles, while collection zoom thresholds use dedicated numeric fields
-- `createTemporaryPersonalFrontier(request)` and `createTemporaryPersonalCollection(request)` are the public create paths for `SESSION_ONLY` entities
+- `createTemporaryPersonalFrontier(request)` and `createTemporaryPersonalCollection(request)` create `SESSION_ONLY` entities immediately in local state and return `APPLIED_LOCAL` with the created id and snapshot when successful
 - `FrontierCreateRequest.collectionId()` lets a plugin create a frontier already attached to a collection
 - many client actions are asynchronous and return `ActionStatus.ACCEPTED_ASYNC`
-- some client-managed flows may return `ActionStatus.APPLIED_LOCAL`
+- creating, updating, or deleting `SESSION_ONLY` personal entities is immediate, independent of server availability, and returns `ActionStatus.APPLIED_LOCAL` when successful
 - `FrontierDataView` and `CollectionDataView` are snapshots, not live objects
 - `FrontierDataView.lifetime()` and `CollectionDataView.lifetime()` expose whether an entity is `PERSISTENT` or `SESSION_ONLY`
 - session-only frontiers and collections are personal-only, not persisted, and not sent to the server

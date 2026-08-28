@@ -9,15 +9,16 @@ import java.util.Optional;
  * Result envelope returned by client-side frontier operations.
  *
  * @param status outcome category for the request
- * @param frontierId id associated with the request when known
- * @param frontier frontier snapshot when the operation was applied locally
+ * @param frontierId id associated with the request when known; present in service results applied locally
+ * @param frontier frontier snapshot when the operation was applied locally; present in service results with
+ *                 {@link ActionStatus#APPLIED_LOCAL}
  */
 public record FrontierActionResult(ActionStatus status,
                                    Optional<FrontierId> frontierId,
                                    Optional<FrontierDataView> frontier) {
 
     /**
-     * Creates a result indicating the operation was applied immediately.
+     * Creates a result indicating the operation was applied immediately, including its id and resulting snapshot.
      *
      * @param frontier resulting frontier snapshot
      * @return applied result

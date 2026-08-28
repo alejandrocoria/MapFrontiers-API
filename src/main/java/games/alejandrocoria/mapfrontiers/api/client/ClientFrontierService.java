@@ -18,7 +18,9 @@ import java.util.Set;
  * Client-side frontier operations.
  * <p>
  * Methods that mutate data usually return quickly with {@link ActionStatus#ACCEPTED_ASYNC}
- * and are finalized by logical-server updates (including singleplayer).
+ * and are finalized by logical-server updates (including singleplayer). Operations on
+ * {@link EntityLifetime#SESSION_ONLY session-only} personal frontiers are applied immediately to local state instead
+ * and do not depend on server participation.
  */
 @SuppressWarnings("unused")
 public interface ClientFrontierService {
@@ -98,13 +100,15 @@ public interface ClientFrontierService {
      * Requests creation of a session-only personal frontier.
      * {@link EntityLifetime#SESSION_ONLY Session-only} frontiers are local-only, are not persisted, are not shareable,
      * are never sent to the server, and disappear when the current client runtime is closed.
+     * A successful request is applied immediately and returns {@link ActionStatus#APPLIED_LOCAL} with the created id
+     * and snapshot.
      * Requests created through convenience overloads that do not take a profile use
      * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
      * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
      * setters, delegates those values to the selected base profile.
      *
      * @param request initial frontier payload
-     * @return request status and optional target id
+     * @return local result with the created id and snapshot when successful
      */
     FrontierActionResult createTemporaryPersonalFrontier(FrontierCreateRequest request);
 
@@ -112,6 +116,8 @@ public interface ClientFrontierService {
      * Requests an update for a personal frontier.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * If the target is {@link EntityLifetime#SESSION_ONLY session-only}, the update is instead applied immediately to
+     * local state regardless of server availability and returns {@link ActionStatus#APPLIED_LOCAL} when successful.
      * {@link ActionStatus#ACCEPTED_ASYNC} confirms local validation and submission, not final server application.
      *
      * @param frontierId target frontier id
@@ -124,6 +130,8 @@ public interface ClientFrontierService {
      * Requests deletion of a personal frontier.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * If the target is {@link EntityLifetime#SESSION_ONLY session-only}, the deletion is instead applied immediately to
+     * local state regardless of server availability and returns {@link ActionStatus#APPLIED_LOCAL} when successful.
      *
      * @param frontierId target frontier id
      * @return request status

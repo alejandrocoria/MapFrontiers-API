@@ -14,8 +14,9 @@ import java.util.Optional;
  * Client-side collection operations.
  * <p>
  * Most methods that mutate data return quickly with {@link ActionStatus#ACCEPTED_ASYNC} and are finalized by
- * logical-server updates (including singleplayer). Session-only personal collection creation is the main exception and
- * may be applied locally without server participation. Collection requests and mutations can include authoritative
+ * logical-server updates (including singleplayer). Operations on
+ * {@link EntityLifetime#SESSION_ONLY session-only} personal collections are applied immediately to local state instead
+ * and do not depend on server participation. Collection requests and mutations can include authoritative
  * visibility and banner metadata when supported by the underlying mod runtime.
  */
 @SuppressWarnings("unused")
@@ -74,13 +75,15 @@ public interface ClientCollectionService {
      * Requests creation of a session-only personal collection.
      * {@link EntityLifetime#SESSION_ONLY Session-only} collections are local-only, are not persisted, are never sent to
      * the server, and disappear when the current client runtime is closed.
+     * A successful request is applied immediately and returns {@link ActionStatus#APPLIED_LOCAL} with the created id
+     * and snapshot.
      * Requests created through convenience overloads that do not take a profile use
      * {@link DefaultValuesProfile#BUILTIN}. {@link DefaultValuesProfile#CONFIGURED} uses the local player's
      * configured defaults as the base for omitted fields. Omitting optional fields, or passing null to optional create
      * setters, delegates those values to the selected base profile.
      *
      * @param request initial collection payload
-     * @return request status and optional target id
+     * @return local result with the created id and snapshot when successful
      */
     CollectionActionResult createTemporaryPersonalCollection(CollectionCreateRequest request);
 
@@ -98,6 +101,8 @@ public interface ClientCollectionService {
      * Requests an update for a personal collection.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * If the target is {@link EntityLifetime#SESSION_ONLY session-only}, the update is instead applied immediately to
+     * local state regardless of server availability and returns {@link ActionStatus#APPLIED_LOCAL} when successful.
      *
      * @param collectionId target collection id
      * @param mutation partial update payload
@@ -118,6 +123,8 @@ public interface ClientCollectionService {
      * Requests deletion of a personal collection.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * If the target is {@link EntityLifetime#SESSION_ONLY session-only}, the deletion is instead applied immediately to
+     * local state regardless of server availability and returns {@link ActionStatus#APPLIED_LOCAL} when successful.
      *
      * @param collectionId target collection id
      * @return request status

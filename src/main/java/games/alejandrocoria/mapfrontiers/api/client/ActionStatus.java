@@ -5,7 +5,8 @@ package games.alejandrocoria.mapfrontiers.api.client;
  */
 public enum ActionStatus {
     /**
-     * Applied immediately to client-managed state.
+     * Applied immediately to client-managed state without awaiting logical-server processing. Successful operations
+     * on session-only personal entities use this status regardless of server availability.
      */
     APPLIED_LOCAL,
     /**
