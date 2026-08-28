@@ -238,6 +238,7 @@ Client-side notes:
 - `DefaultValuesProfile.CONFIGURED` uses the local player's configured defaults as the base for omitted create fields
 - omitting an optional create field, or passing `null` to an optional create setter, delegates that field to the selected default profile
 - updates use mutations: `FrontierMutation` and `CollectionMutation`
+- client frontier and collection service methods must be called from the Minecraft client thread; the API does not schedule calls from other threads
 - `CollectionVisibilitySettings` exposes the authoritative collection visibility state returned by the API
 - `CollectionVisibilityFlag` covers the boolean collection visibility toggles, while collection zoom thresholds use dedicated numeric fields
 - `createTemporaryPersonalFrontier(request)` and `createTemporaryPersonalCollection(request)` are the public create paths for `SESSION_ONLY` entities
@@ -252,6 +253,29 @@ Client-side notes:
 - collection visibility and banner metadata are authoritative collection state, not client-local override state
 - collection visibility zoom helpers currently reflect the supported values of the underlying mod implementation
 - `Visible` and the per-map zoom thresholds are independent in collection visibility settings
+
+### Incremental geometry updates
+
+Use the geometry methods on `FrontierMutation.Builder` when a small edit does not require replacing the whole shape:
+
+```java
+FrontierMutation pathEdit = FrontierMutation.builder()
+        .removePathPointAt(0)
+        .insertPathPointAt(1, new Point2i(120, 30))
+        .insertPathPointAfterLast(new Point2i(180, 60))
+        .build();
+
+api.frontiers().updatePersonalFrontier(frontierId, pathEdit);
+```
+
+Operations execute in builder order and the complete mutation is atomic. Path, Vertex and Chunk operations cannot be
+mixed with each other or with `shape(...)` in one mutation. Indexed inserts accept positions from zero through the
+current size; indexed replacements and removals require an existing position. Those conditions are evaluated while
+applying each operation, after preceding operations in the same mutation.
+
+Automatic Path and Vertex insertion uses only X/Z distances and does not use GUI snapping or selection. Chunk additions
+and removals are idempotent. `geometryEdits()` exposes an immutable sequence for inspection; operations are constructed
+through the mutation builder.
 
 ## Register a server plugin
 
@@ -346,11 +370,13 @@ public final class ExampleServerPlugin implements IMapFrontiersServerPlugin {
 Server-side notes:
 
 - the server API works on authoritative server state immediately
+- server frontier and collection service methods must be called from the main server thread; the API does not schedule calls from other threads
 - the server API currently exposes only global frontiers and global collections
 - global frontier creation requires `UserRef owner` plus a `FrontierCreateRequest`
 - global collection creation requires `UserRef owner` plus a `CollectionCreateRequest`
 - create requests use `DefaultValuesProfile.BUILTIN` when no profile is specified
 - `DefaultValuesProfile.CONFIGURED` is currently unsupported in the server API and should be treated as invalid there
+- `updateGlobalFrontier(...)` returns an empty `Optional` when the target is unavailable or the mutation cannot be applied
 
 ## Basic concepts
 

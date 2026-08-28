@@ -4,6 +4,9 @@ import games.alejandrocoria.mapfrontiers.api.event.EventBus;
 
 /**
  * Root entry point for client-side API access.
+ * <p>
+ * Frontier and collection service methods must be called from the Minecraft client thread. Implementations do not
+ * schedule calls made from other threads.
  */
 @SuppressWarnings("unused")
 public interface IMapFrontiersClientAPI {

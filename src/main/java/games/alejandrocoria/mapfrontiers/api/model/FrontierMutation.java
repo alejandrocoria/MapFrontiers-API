@@ -1,6 +1,8 @@
 package games.alejandrocoria.mapfrontiers.api.model;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -8,6 +10,11 @@ import java.util.Set;
 /**
  * Partial frontier update payload.
  * Only present fields are applied when this mutation is used.
+ * <p>
+ * Incremental {@link GeometryEdit geometry edits} execute in builder order and are applied atomically with all other
+ * fields in this mutation. Every edit must match the target frontier shape and every index is evaluated against the
+ * state produced by preceding edits. An invalid edit rejects the complete mutation. Full shape replacement and
+ * incremental edits are mutually exclusive, as are edits for different geometry families.
  * <p>
  * For now, MapFrontiers limits each frontier name field to 48 characters.
  */
@@ -17,6 +24,7 @@ public final class FrontierMutation {
     private final Optional<String> name2;
     private final Optional<Integer> color;
     private final Optional<FrontierShape> shape;
+    private final List<GeometryEdit> geometryEdits;
     private final Optional<Set<FrontierVisibilityFlag>> visibility;
     private final Set<FrontierVisibilityFlag> visibilityToAdd;
     private final Set<FrontierVisibilityFlag> visibilityToRemove;
@@ -30,6 +38,7 @@ public final class FrontierMutation {
                              Optional<String> name2,
                              Optional<Integer> color,
                              Optional<FrontierShape> shape,
+                             List<GeometryEdit> geometryEdits,
                              Optional<Set<FrontierVisibilityFlag>> visibility,
                              Set<FrontierVisibilityFlag> visibilityToAdd,
                              Set<FrontierVisibilityFlag> visibilityToRemove,
@@ -42,6 +51,7 @@ public final class FrontierMutation {
         this.name2 = name2;
         this.color = color;
         this.shape = shape;
+        this.geometryEdits = List.copyOf(geometryEdits);
         this.visibility = visibility.map(Set::copyOf);
         this.visibilityToAdd = Set.copyOf(visibilityToAdd);
         this.visibilityToRemove = Set.copyOf(visibilityToRemove);
@@ -56,6 +66,9 @@ public final class FrontierMutation {
         }
         if (clearCollection && this.collectionId.isPresent()) {
             throw new IllegalArgumentException("Mutation cannot set and clear collection at the same time");
+        }
+        if (this.shape.isPresent() && !this.geometryEdits.isEmpty()) {
+            throw new IllegalArgumentException("Mutation cannot replace and incrementally edit geometry at the same time");
         }
     }
 
@@ -253,6 +266,17 @@ public final class FrontierMutation {
     }
 
     /**
+     * Returns incremental geometry operations in application order.
+     * The returned list and every operation in it are immutable. A mutation never contains both these operations and
+     * a full {@link #shape()} replacement.
+     *
+     * @return ordered incremental geometry operations
+     */
+    public List<GeometryEdit> geometryEdits() {
+        return geometryEdits;
+    }
+
+    /**
      * Returns the replacement visibility set when present.
      * Supported flags are the values defined by {@link FrontierVisibilityFlag}.
      *
@@ -341,6 +365,7 @@ public final class FrontierMutation {
                 && name2.equals(that.name2)
                 && color.equals(that.color)
                 && shape.equals(that.shape)
+                && geometryEdits.equals(that.geometryEdits)
                 && visibility.equals(that.visibility)
                 && visibilityToAdd.equals(that.visibilityToAdd)
                 && visibilityToRemove.equals(that.visibilityToRemove)
@@ -352,7 +377,8 @@ public final class FrontierMutation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name1, name2, color, shape, visibility, visibilityToAdd, visibilityToRemove, banner, pathStyle, collectionId, clearBanner, clearCollection);
+        return Objects.hash(name1, name2, color, shape, geometryEdits, visibility, visibilityToAdd, visibilityToRemove,
+                banner, pathStyle, collectionId, clearBanner, clearCollection);
     }
 
     @Override
@@ -361,6 +387,7 @@ public final class FrontierMutation {
                 + ", name2=" + name2
                 + ", color=" + color
                 + ", shape=" + shape
+                + ", geometryEdits=" + geometryEdits
                 + ", visibility=" + visibility
                 + ", visibilityToAdd=" + visibilityToAdd
                 + ", visibilityToRemove=" + visibilityToRemove
@@ -380,6 +407,8 @@ public final class FrontierMutation {
         private Optional<String> name2 = Optional.empty();
         private Optional<Integer> color = Optional.empty();
         private Optional<FrontierShape> shape = Optional.empty();
+        private final List<GeometryEdit> geometryEdits = new ArrayList<>();
+        private GeometryFamily geometryFamily;
         private Optional<Set<FrontierVisibilityFlag>> visibility = Optional.empty();
         private final EnumSet<FrontierVisibilityFlag> visibilityToAdd = EnumSet.noneOf(FrontierVisibilityFlag.class);
         private final EnumSet<FrontierVisibilityFlag> visibilityToRemove = EnumSet.noneOf(FrontierVisibilityFlag.class);
@@ -455,8 +484,170 @@ public final class FrontierMutation {
          * @return this builder
          */
         public Builder shape(FrontierShape value) {
+            if (value != null && !geometryEdits.isEmpty()) {
+                throw new IllegalStateException("Mutation cannot replace and incrementally edit geometry at the same time");
+            }
             shape = Optional.ofNullable(value);
             return this;
+        }
+
+        /**
+         * Adds a Path operation that inserts at an index between zero and the point count at application time,
+         * inclusive.
+         *
+         * @param index insertion index
+         * @param point point to insert
+         * @return this builder
+         */
+        public Builder insertPathPointAt(int index, Point2i point) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.InsertPathPointAt(index, point));
+        }
+
+        /**
+         * Adds a Path operation that inserts before the first point.
+         *
+         * @param point point to insert
+         * @return this builder
+         */
+        public Builder insertPathPointBeforeFirst(Point2i point) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.InsertPathPointBeforeFirst(point));
+        }
+
+        /**
+         * Adds a Path operation that inserts after the last point.
+         *
+         * @param point point to insert
+         * @return this builder
+         */
+        public Builder insertPathPointAfterLast(Point2i point) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.InsertPathPointAfterLast(point));
+        }
+
+        /**
+         * Adds a Path operation that inserts using X/Z distances without snapping or GUI selection state. The first
+         * stored interior segment wins segment ties and is selected only when strictly closer than both endpoints;
+         * the final endpoint wins an endpoint tie. Degenerate segments are treated as points.
+         *
+         * @param point point to insert
+         * @return this builder
+         */
+        public Builder insertPathPointAutomatically(Point2i point) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.InsertPathPointAutomatically(point));
+        }
+
+        /**
+         * Adds a Path operation that replaces an existing point at application time.
+         *
+         * @param index existing point index
+         * @param point replacement point
+         * @return this builder
+         */
+        public Builder setPathPointAt(int index, Point2i point) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.SetPathPointAt(index, point));
+        }
+
+        /**
+         * Adds a Path operation that removes an existing point at application time.
+         *
+         * @param index existing point index
+         * @return this builder
+         */
+        public Builder removePathPointAt(int index) {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.RemovePathPointAt(index));
+        }
+
+        /**
+         * Adds a Path operation that reverses its stored point order.
+         *
+         * @return this builder
+         */
+        public Builder reversePath() {
+            return addGeometryEdit(GeometryFamily.PATH, new GeometryEdit.ReversePath());
+        }
+
+        /**
+         * Adds a Vertex operation that inserts at an index between zero and the vertex count at application time,
+         * inclusive.
+         *
+         * @param index insertion index
+         * @param vertex vertex to insert
+         * @return this builder
+         */
+        public Builder insertVertexAt(int index, Point2i vertex) {
+            return addGeometryEdit(GeometryFamily.VERTEX, new GeometryEdit.InsertVertexAt(index, vertex));
+        }
+
+        /**
+         * Adds a Vertex operation that inserts on the nearest edge of the closed polygon using X/Z distances. The
+         * closing edge is included, the first stored edge wins ties, and degenerate edges are treated as points. An
+         * empty polygon inserts at zero and a one-vertex polygon inserts after that vertex.
+         *
+         * @param vertex vertex to insert
+         * @return this builder
+         */
+        public Builder insertVertexAutomatically(Point2i vertex) {
+            return addGeometryEdit(GeometryFamily.VERTEX, new GeometryEdit.InsertVertexAutomatically(vertex));
+        }
+
+        /**
+         * Adds a Vertex operation that replaces an existing vertex at application time.
+         *
+         * @param index existing vertex index
+         * @param vertex replacement vertex
+         * @return this builder
+         */
+        public Builder setVertexAt(int index, Point2i vertex) {
+            return addGeometryEdit(GeometryFamily.VERTEX, new GeometryEdit.SetVertexAt(index, vertex));
+        }
+
+        /**
+         * Adds a Vertex operation that removes an existing vertex at application time.
+         *
+         * @param index existing vertex index
+         * @return this builder
+         */
+        public Builder removeVertexAt(int index) {
+            return addGeometryEdit(GeometryFamily.VERTEX, new GeometryEdit.RemoveVertexAt(index));
+        }
+
+        /**
+         * Adds one chunk to a Chunk frontier. Adding an already present chunk is valid and has no effect.
+         *
+         * @param chunk chunk to add
+         * @return this builder
+         */
+        public Builder addChunk(ChunkCoord chunk) {
+            return addChunks(Set.of(chunk));
+        }
+
+        /**
+         * Adds chunks to a Chunk frontier. Chunks already present are valid and have no effect.
+         *
+         * @param chunks chunks to add
+         * @return this builder
+         */
+        public Builder addChunks(Set<ChunkCoord> chunks) {
+            return addGeometryEdit(GeometryFamily.CHUNK, new GeometryEdit.AddChunks(chunks));
+        }
+
+        /**
+         * Removes one chunk from a Chunk frontier. Removing an absent chunk is valid and has no effect.
+         *
+         * @param chunk chunk to remove
+         * @return this builder
+         */
+        public Builder removeChunk(ChunkCoord chunk) {
+            return removeChunks(Set.of(chunk));
+        }
+
+        /**
+         * Removes chunks from a Chunk frontier. Chunks already absent are valid and have no effect.
+         *
+         * @param chunks chunks to remove
+         * @return this builder
+         */
+        public Builder removeChunks(Set<ChunkCoord> chunks) {
+            return addGeometryEdit(GeometryFamily.CHUNK, new GeometryEdit.RemoveChunks(chunks));
         }
 
         /**
@@ -559,6 +750,18 @@ public final class FrontierMutation {
             return this;
         }
 
+        private Builder addGeometryEdit(GeometryFamily family, GeometryEdit edit) {
+            if (shape.isPresent()) {
+                throw new IllegalStateException("Mutation cannot replace and incrementally edit geometry at the same time");
+            }
+            if (geometryFamily != null && geometryFamily != family) {
+                throw new IllegalStateException("Mutation cannot mix " + geometryFamily + " and " + family + " geometry edits");
+            }
+            geometryFamily = family;
+            geometryEdits.add(edit);
+            return this;
+        }
+
         /**
          * Builds an immutable mutation from the current builder state.
          *
@@ -569,6 +772,7 @@ public final class FrontierMutation {
                     name2,
                     color,
                     shape,
+                    geometryEdits,
                     visibility,
                     visibilityToAdd,
                     visibilityToRemove,
@@ -577,6 +781,12 @@ public final class FrontierMutation {
                     collectionId,
                     clearBanner,
                     clearCollection);
+        }
+
+        private enum GeometryFamily {
+            PATH,
+            VERTEX,
+            CHUNK
         }
     }
 }

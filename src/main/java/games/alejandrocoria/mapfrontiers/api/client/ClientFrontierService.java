@@ -47,6 +47,7 @@ public interface ClientFrontierService {
     /**
      * Requests an update for a global frontier.
      * In multiplayer and singleplayer this is handled asynchronously by the logical server.
+     * {@link ActionStatus#ACCEPTED_ASYNC} confirms local validation and submission, not final server application.
      *
      * @param frontierId target frontier id
      * @param mutation partial update payload
@@ -111,6 +112,7 @@ public interface ClientFrontierService {
      * Requests an update for a personal frontier.
      * In singleplayer this is handled asynchronously by the logical server.
      * In multiplayer this is asynchronous when the mod is present on the server, and may be handled locally when it is not.
+     * {@link ActionStatus#ACCEPTED_ASYNC} confirms local validation and submission, not final server application.
      *
      * @param frontierId target frontier id
      * @param mutation partial update payload

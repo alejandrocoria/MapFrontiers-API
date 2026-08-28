@@ -38,7 +38,7 @@ public interface ServerFrontierService {
      *
      * @param frontierId target frontier id
      * @param mutation partial update payload
-     * @return updated frontier snapshot, or empty when not found or not global
+     * @return updated frontier snapshot, or empty when not found, not global, or the mutation cannot be applied
      */
     Optional<FrontierDataView> updateGlobalFrontier(FrontierId frontierId, FrontierMutation mutation);
 
