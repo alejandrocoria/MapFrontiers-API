@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.client;
 
+import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.EntityLifetime;
@@ -84,6 +85,16 @@ public interface ClientFrontierService {
     List<FrontierDataView> listGlobalFrontiers(DimensionId dimension);
 
     /**
+     * Returns global frontiers currently cached on the client that belong to a collection.
+     * This method does not trigger network requests. An unknown, empty, or personal collection produces an empty list.
+     * The returned snapshots have no guaranteed order.
+     *
+     * @param collectionId target collection id
+     * @return cached global frontier snapshots in the collection
+     */
+    List<FrontierDataView> listGlobalFrontiersInCollection(CollectionId collectionId);
+
+    /**
      * Requests creation of a persistent personal frontier owned by the current client actor.
      * Temporary creation is exposed by {@link #createTemporaryPersonalFrontier(FrontierCreateRequest)}.
      * Requests created through convenience overloads that do not take a profile use
@@ -156,6 +167,17 @@ public interface ClientFrontierService {
      * @return cached personal frontier snapshots
      */
     List<FrontierDataView> listPersonalFrontiers(DimensionId dimension);
+
+    /**
+     * Returns personal frontiers currently cached on the client that belong to a collection.
+     * This includes persistent and {@link EntityLifetime#SESSION_ONLY session-only} frontiers visible to the client and
+     * does not trigger network requests. An unknown, empty, or global collection produces an empty list. The returned
+     * snapshots have no guaranteed order.
+     *
+     * @param collectionId target collection id
+     * @return cached personal frontier snapshots in the collection
+     */
+    List<FrontierDataView> listPersonalFrontiersInCollection(CollectionId collectionId);
 
     /**
      * Requests sharing a personal frontier with another user.

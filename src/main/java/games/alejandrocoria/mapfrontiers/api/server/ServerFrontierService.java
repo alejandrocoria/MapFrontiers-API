@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.server;
 
+import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.DefaultValuesProfile;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
@@ -57,6 +58,16 @@ public interface ServerFrontierService {
      * @return global frontier snapshots
      */
     List<FrontierDataView> listGlobalFrontiers(DimensionId dimension);
+
+    /**
+     * Lists global frontier snapshots that belong to a collection.
+     * An unknown, empty, or personal collection produces an empty list. The returned snapshots have no guaranteed
+     * order.
+     *
+     * @param collectionId target collection id
+     * @return global frontier snapshots in the collection
+     */
+    List<FrontierDataView> listGlobalFrontiersInCollection(CollectionId collectionId);
 
     /**
      * Returns a global frontier snapshot by id.

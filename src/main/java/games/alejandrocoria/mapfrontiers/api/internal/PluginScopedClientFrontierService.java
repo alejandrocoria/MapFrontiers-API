@@ -1,6 +1,7 @@
 package games.alejandrocoria.mapfrontiers.api.internal;
 
 import games.alejandrocoria.mapfrontiers.api.client.FrontierActionResult;
+import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
@@ -68,6 +69,14 @@ public interface PluginScopedClientFrontierService {
      */
     List<FrontierDataView> listGlobalFrontiers(String pluginModId, DimensionId dimension);
     /**
+     * Lists cached global frontiers in a collection for the plugin scope.
+     *
+     * @param pluginModId source plugin id injected by the wrapper
+     * @param collectionId target collection id
+     * @return cached global frontier snapshots in the collection
+     */
+    List<FrontierDataView> listGlobalFrontiersInCollection(String pluginModId, CollectionId collectionId);
+    /**
      * Requests creation of a persistent personal frontier within the plugin scope.
      *
      * @param pluginModId source plugin id injected by the wrapper
@@ -116,6 +125,14 @@ public interface PluginScopedClientFrontierService {
      * @return cached personal frontier snapshots
      */
     List<FrontierDataView> listPersonalFrontiers(String pluginModId, DimensionId dimension);
+    /**
+     * Lists cached personal frontiers in a collection for the plugin scope.
+     *
+     * @param pluginModId source plugin id injected by the wrapper
+     * @param collectionId target collection id
+     * @return cached personal frontier snapshots in the collection
+     */
+    List<FrontierDataView> listPersonalFrontiersInCollection(String pluginModId, CollectionId collectionId);
     /**
      * Requests sharing a personal frontier within the plugin scope.
      *

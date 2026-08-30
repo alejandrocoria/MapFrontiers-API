@@ -347,6 +347,11 @@ public final class MapFrontiersAPI {
         }
 
         @Override
+        public List<FrontierDataView> listGlobalFrontiersInCollection(CollectionId collectionId) {
+            return delegate.listGlobalFrontiersInCollection(pluginModId, collectionId);
+        }
+
+        @Override
         public FrontierActionResult createPersonalFrontier(FrontierCreateRequest request) {
             return delegate.createPersonalFrontier(pluginModId, request);
         }
@@ -374,6 +379,11 @@ public final class MapFrontiersAPI {
         @Override
         public List<FrontierDataView> listPersonalFrontiers(DimensionId dimension) {
             return delegate.listPersonalFrontiers(pluginModId, dimension);
+        }
+
+        @Override
+        public List<FrontierDataView> listPersonalFrontiersInCollection(CollectionId collectionId) {
+            return delegate.listPersonalFrontiersInCollection(pluginModId, collectionId);
         }
 
         @Override
@@ -429,6 +439,11 @@ public final class MapFrontiersAPI {
         @Override
         public List<FrontierDataView> listGlobalFrontiers(DimensionId dimension) {
             return delegate.listGlobalFrontiers(pluginModId, dimension);
+        }
+
+        @Override
+        public List<FrontierDataView> listGlobalFrontiersInCollection(CollectionId collectionId) {
+            return delegate.listGlobalFrontiersInCollection(pluginModId, collectionId);
         }
 
         @Override

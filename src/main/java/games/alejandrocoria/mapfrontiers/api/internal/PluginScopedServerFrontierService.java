@@ -1,5 +1,6 @@
 package games.alejandrocoria.mapfrontiers.api.internal;
 
+import games.alejandrocoria.mapfrontiers.api.model.CollectionId;
 import games.alejandrocoria.mapfrontiers.api.model.DimensionId;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierCreateRequest;
 import games.alejandrocoria.mapfrontiers.api.model.FrontierDataView;
@@ -49,6 +50,14 @@ public interface PluginScopedServerFrontierService {
      * @return global frontier snapshots
      */
     List<FrontierDataView> listGlobalFrontiers(String pluginModId, DimensionId dimension);
+    /**
+     * Lists global frontiers in a collection on authoritative server state for the plugin scope.
+     *
+     * @param pluginModId source plugin id injected by the wrapper
+     * @param collectionId target collection id
+     * @return global frontier snapshots in the collection
+     */
+    List<FrontierDataView> listGlobalFrontiersInCollection(String pluginModId, CollectionId collectionId);
     /**
      * Returns a global frontier snapshot for the plugin scope.
      *

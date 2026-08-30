@@ -243,6 +243,7 @@ Client-side notes:
 - `CollectionVisibilityFlag` covers the boolean collection visibility toggles, while collection zoom thresholds use dedicated numeric fields
 - `createTemporaryPersonalFrontier(request)` and `createTemporaryPersonalCollection(request)` create `SESSION_ONLY` entities immediately in local state and return `APPLIED_LOCAL` with the created id and snapshot when successful
 - `FrontierCreateRequest.collectionId()` lets a plugin create a frontier already attached to a collection
+- `listGlobalFrontiersInCollection(collectionId)` and `listPersonalFrontiersInCollection(collectionId)` query cached collection members without triggering network requests
 - many client actions are asynchronous and return `ActionStatus.ACCEPTED_ASYNC`
 - creating, updating, or deleting `SESSION_ONLY` personal entities is immediate, independent of server availability, and returns `ActionStatus.APPLIED_LOCAL` when successful
 - `FrontierDataView` and `CollectionDataView` are snapshots, not live objects
@@ -272,6 +273,20 @@ Operations execute in builder order and the complete mutation is atomic. Path, V
 mixed with each other or with `shape(...)` in one mutation. Indexed inserts accept positions from zero through the
 current size; indexed replacements and removals require an existing position. Those conditions are evaluated while
 applying each operation, after preceding operations in the same mutation.
+
+### Collection membership queries
+
+Use the frontier service to inspect the members of a known collection. Client queries read the current cached state and
+do not trigger network requests:
+
+```java
+List<FrontierDataView> personalMembers = api.frontiers()
+        .listPersonalFrontiersInCollection(collectionId);
+```
+
+The client API provides separate global and personal queries. The personal query includes persistent and session-only
+frontiers visible to the client. The server API exposes only the global query. Unknown, empty, or incompatible
+collections return an empty list, and member order is not part of the API contract.
 
 Automatic Path and Vertex insertion uses only X/Z distances and does not use GUI snapping or selection. Chunk additions
 and removals are idempotent. `geometryEdits()` exposes an immutable sequence for inspection; operations are constructed
@@ -355,9 +370,11 @@ public final class ExampleServerPlugin implements IMapFrontiersServerPlugin {
         );
 
         int globalFrontierCount = api.frontiers().listGlobalFrontiers(new DimensionId("minecraft:overworld")).size();
+        int collectionMemberCount = api.frontiers().listGlobalFrontiersInCollection(collectionId).size();
         int globalCollectionCount = api.collections().listGlobalCollections().size();
 
         System.out.println("Global frontiers in overworld: " + globalFrontierCount);
+        System.out.println("Global frontiers in collection: " + collectionMemberCount);
         System.out.println("Global collections: " + globalCollectionCount);
     }
 
@@ -377,6 +394,7 @@ Server-side notes:
 - create requests use `DefaultValuesProfile.BUILTIN` when no profile is specified
 - `DefaultValuesProfile.CONFIGURED` is currently unsupported in the server API and should be treated as invalid there
 - `updateGlobalFrontier(...)` returns an empty `Optional` when the target is unavailable or the mutation cannot be applied
+- `listGlobalFrontiersInCollection(...)` reads indexed collection membership across dimensions
 
 ## Basic concepts
 
